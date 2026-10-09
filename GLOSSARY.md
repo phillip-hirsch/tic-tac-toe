@@ -48,6 +48,10 @@ _Avoid_: Play again, replay, new round
 Abandoning an unfinished Game for a fresh one between the same Players.
 _Avoid_: Reset, Rematch (which follows an Outcome)
 
+**New players**:
+Leaving the current Game to enter names again, keeping the current names as a starting point.
+_Avoid_: Change players, reset, new game
+
 ### Outcomes
 
 **Outcome**:
