@@ -1,12 +1,10 @@
-import { useReducer } from "react";
+import { type RefObject, useReducer, useRef } from "react";
+import { flushSync } from "react-dom";
 import { Board } from "./Board.tsx";
-import { type GameState, gameReducer, initialState } from "./game.ts";
+import { type GameEvent, type GameState, gameReducer, initialState } from "./game.ts";
+import { Setup } from "./Setup.tsx";
 
 type GameInProgressOrOver = Exclude<GameState, { phase: "setup" }>;
-
-// Until the Setup screen lands, every visit opens straight into a Game.
-const startWithDefaultNames = (state: GameState) =>
-  gameReducer(state, { type: "start", names: { X: "Player X", O: "Player O" } });
 
 function status(state: GameInProgressOrOver) {
   const { players } = state;
@@ -16,8 +14,15 @@ function status(state: GameInProgressOrOver) {
 }
 
 function App() {
-  const [state, dispatch] = useReducer(gameReducer, initialState, startWithDefaultNames);
-  if (state.phase === "setup") return null;
+  const [state, dispatch] = useReducer(gameReducer, initialState);
+  const xNameRef = useRef<HTMLInputElement>(null);
+  const topLeftCellRef = useRef<HTMLButtonElement>(null);
+
+  /** Dispatch, render the next view, then move focus into it. */
+  const dispatchAndFocus = (event: GameEvent, target: RefObject<HTMLElement | null>) => {
+    flushSync(() => dispatch(event));
+    target.current?.focus();
+  };
 
   const winningLine =
     state.phase === "finished" && state.outcome.kind === "win" ? state.outcome.line : undefined;
@@ -25,13 +30,33 @@ function App() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-3xl flex-col items-center justify-center gap-10 px-6 py-12">
       <h1 className="font-display text-5xl leading-none sm:text-6xl">Tic-tac-toe</h1>
-      <p className="text-xl">{status(state)}</p>
-      <Board
-        board={state.board}
-        winningLine={winningLine}
-        disabled={state.phase === "finished"}
-        onMove={(cell) => dispatch({ type: "move", cell })}
-      />
+      {state.phase === "setup" ? (
+        <Setup
+          drafts={state.drafts}
+          xNameRef={xNameRef}
+          onStart={(names) => dispatchAndFocus({ type: "start", names }, topLeftCellRef)}
+        />
+      ) : (
+        <>
+          <p className="text-xl">{status(state)}</p>
+          <Board
+            board={state.board}
+            winningLine={winningLine}
+            disabled={state.phase === "finished"}
+            onMove={(cell) => dispatch({ type: "move", cell })}
+            topLeftCellRef={topLeftCellRef}
+          />
+          <div className="flex flex-wrap justify-center gap-4">
+            <button
+              type="button"
+              onClick={() => dispatchAndFocus({ type: "newPlayers" }, xNameRef)}
+              className="min-h-11 border-2 border-ink px-6 py-1 text-lg hover:bg-ink hover:text-paper"
+            >
+              New players
+            </button>
+          </div>
+        </>
+      )}
     </main>
   );
 }
