@@ -31,9 +31,5 @@ export default defineConfig({
       },
     ],
   },
-  test: {
-    // Keeps `vp test` green until the first tests land.
-    passWithNoTests: true,
-  },
   plugins: lazyPlugins(() => [react(), tailwindcss()]),
 });
