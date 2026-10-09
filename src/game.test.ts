@@ -3,6 +3,8 @@ import { type GameEvent, gameReducer, initialState } from "./game.ts";
 
 const start: GameEvent = { type: "start", names: { X: "Ada", O: "Grace" } };
 
+const newPlayers: GameEvent = { type: "newPlayers" };
+
 const move = (cell: number): GameEvent => ({ type: "move", cell });
 
 // Each Line, with three other Cells that never complete a Line themselves.
@@ -111,5 +113,77 @@ describe("Game", () => {
 
   it("ignores a Move during Setup", () => {
     expect(gameReducer(initialState, move(0))).toBe(initialState);
+  });
+});
+
+const startWith = (X: string, O: string): GameEvent => ({ type: "start", names: { X, O } });
+
+describe("Setup", () => {
+  it("opens on Setup with both names blank", () => {
+    expect(initialState).toEqual({ phase: "setup", drafts: { X: "", O: "" } });
+  });
+
+  it("trims spaces from both ends of each Player's name", () => {
+    expect(play(startWith("  Ada ", "\tGrace  "))).toMatchObject({
+      players: { X: "Ada", O: "Grace" },
+    });
+  });
+
+  it("caps each Player's name at 20 characters after trimming", () => {
+    expect(play(startWith("  Bartholomew Fitzwilliam", "Ada Lovelace Byron King"))).toMatchObject({
+      players: { X: "Bartholomew Fitzwill", O: "Ada Lovelace Byron K" },
+    });
+  });
+
+  it("names a Player with a blank name after their Mark", () => {
+    expect(play(startWith("", "   "))).toMatchObject({
+      players: { X: "Player X", O: "Player O" },
+    });
+  });
+
+  it("accepts the same name for both Players", () => {
+    expect(play(startWith("Sam", "Sam"))).toMatchObject({ players: { X: "Sam", O: "Sam" } });
+  });
+
+  it("gives the first name X, and X makes the first Move", () => {
+    const state = play(startWith("Ada", "Grace"), move(0));
+    expect(state).toMatchObject({ players: { X: "Ada", O: "Grace" }, turn: "O" });
+    expect(state).toMatchObject({ board: ["X", null, null, null, null, null, null, null, null] });
+  });
+
+  it("ignores start during a Game", () => {
+    const state = play(start, move(4));
+    expect(gameReducer(state, startWith("Bob", "Eve"))).toBe(state);
+  });
+
+  it("ignores start after an Outcome", () => {
+    const state = play(start, ...drawnGame);
+    expect(gameReducer(state, startWith("Bob", "Eve"))).toBe(state);
+  });
+
+  it("New players during a Game returns to Setup with the current names filled in", () => {
+    expect(play(start, move(4), newPlayers)).toEqual({
+      phase: "setup",
+      drafts: { X: "Ada", O: "Grace" },
+    });
+  });
+
+  it("New players after an Outcome returns to Setup with the current names filled in", () => {
+    expect(play(startWith(" Ada ", ""), ...drawnGame, newPlayers)).toEqual({
+      phase: "setup",
+      drafts: { X: "Ada", O: "Player O" },
+    });
+  });
+
+  it("ignores New players during Setup", () => {
+    expect(gameReducer(initialState, newPlayers)).toBe(initialState);
+  });
+
+  it("starts a Game with new names after New players", () => {
+    expect(play(start, newPlayers, startWith("Bob", "Eve"))).toMatchObject({
+      phase: "playing",
+      players: { X: "Bob", O: "Eve" },
+      turn: "X",
+    });
   });
 });
