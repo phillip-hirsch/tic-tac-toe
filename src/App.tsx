@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useReducer, useRef } from "react";
 import { Board } from "./Board.tsx";
 import { type GameState, gameReducer, initialState } from "./game.ts";
 
@@ -29,9 +29,22 @@ function status(state: GameInProgressOrOver) {
     : "Draw";
 }
 
+const button = "min-h-11 rounded-sm px-6 text-lg";
+const primaryButton = `${button} bg-ink text-paper`;
+const secondaryButton = `${button} border-2 border-grid hover:border-ink`;
+
+/** Ref callback: focus the element once, when it mounts. */
+const focusOnMount = (element: HTMLElement | null) => element?.focus();
+
 function App() {
   const [state, dispatch] = useReducer(gameReducer, initialState, startWithDefaultNames);
+  const firstCell = useRef<HTMLButtonElement>(null);
   if (state.phase === "setup") return null;
+
+  const playAgain = (type: "rematch" | "restart") => {
+    dispatch({ type });
+    firstCell.current?.focus();
+  };
 
   const winningLine =
     state.phase === "finished" && state.outcome.kind === "win" ? state.outcome.line : undefined;
@@ -45,10 +58,27 @@ function App() {
       </p>
       <Board
         board={state.board}
+        firstCellRef={firstCell}
         winningLine={winningLine}
         disabled={state.phase === "finished"}
         onMove={(cell) => dispatch({ type: "move", cell })}
       />
+      <div className="flex flex-wrap justify-center gap-4">
+        {state.phase === "finished" ? (
+          <button
+            ref={focusOnMount}
+            type="button"
+            className={primaryButton}
+            onClick={() => playAgain("rematch")}
+          >
+            Rematch
+          </button>
+        ) : (
+          <button type="button" className={secondaryButton} onClick={() => playAgain("restart")}>
+            Restart
+          </button>
+        )}
+      </div>
     </main>
   );
 }

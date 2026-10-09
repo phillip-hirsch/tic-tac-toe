@@ -5,6 +5,17 @@ const start: GameEvent = { type: "start", names: { X: "Ada", O: "Grace" } };
 
 const move = (cell: number): GameEvent => ({ type: "move", cell });
 
+const rematch: GameEvent = { type: "rematch" };
+
+const restart: GameEvent = { type: "restart" };
+
+const freshGame = {
+  phase: "playing",
+  players: { X: "Ada", O: "Grace" },
+  board: [null, null, null, null, null, null, null, null, null],
+  turn: "X",
+};
+
 // Each Line, with three other Cells that never complete a Line themselves.
 const lines = [
   { name: "top row", line: [0, 1, 2], others: [3, 4, 8] },
@@ -111,5 +122,44 @@ describe("Game", () => {
 
   it("ignores a Move during Setup", () => {
     expect(gameReducer(initialState, move(0))).toBe(initialState);
+  });
+
+  it("Rematch after a Win starts a fresh Game between the same Players with X to move", () => {
+    expect(play(start, ...[0, 3, 1, 4, 2].map(move), rematch)).toEqual(freshGame);
+  });
+
+  it("ignores a Rematch before an Outcome", () => {
+    const state = play(start, move(4));
+    expect(gameReducer(state, rematch)).toBe(state);
+  });
+
+  it("Restart abandons an unfinished Game for a fresh one between the same Players with X to move", () => {
+    expect(play(start, move(4), move(0), move(8), restart)).toEqual(freshGame);
+  });
+
+  it("Rematch after a Draw starts a fresh Game between the same Players", () => {
+    expect(play(start, ...drawnGame, rematch)).toEqual(freshGame);
+  });
+
+  it("ignores a Restart after a Win", () => {
+    const state = play(start, ...[0, 3, 1, 4, 2].map(move));
+    expect(gameReducer(state, restart)).toBe(state);
+  });
+
+  it("ignores a Restart after a Draw", () => {
+    const state = play(start, ...drawnGame);
+    expect(gameReducer(state, restart)).toBe(state);
+  });
+
+  it.each([
+    ["Rematch", rematch],
+    ["Restart", restart],
+  ])("ignores a %s during Setup", (_, event) => {
+    expect(gameReducer(initialState, event)).toBe(initialState);
+  });
+
+  it("X moves first and Turns alternate after a Rematch", () => {
+    const state = play(start, ...drawnGame, rematch, move(0), move(1));
+    expect(state).toMatchObject({ board: ["X", "O", null, null, null, null, null, null, null] });
   });
 });

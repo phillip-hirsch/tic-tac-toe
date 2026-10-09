@@ -1,14 +1,10 @@
-import { type KeyboardEvent, type Ref, useImperativeHandle, useRef, useState } from "react";
+import { type KeyboardEvent, type Ref, useState } from "react";
 import type { Cell, Line } from "./game.ts";
 
-export type BoardHandle = {
-  /** Move focus, and the Board's Tab stop, to the top-left Cell. */
-  focusFirstCell: () => void;
-};
-
 type Props = {
-  ref?: Ref<BoardHandle>;
   board: readonly Cell[];
+  /** The top-left Cell, for moving focus there when a fresh Game starts. */
+  firstCellRef?: Ref<HTMLButtonElement>;
   winningLine?: Line;
   disabled: boolean;
   onMove: (cell: number) => void;
@@ -27,23 +23,24 @@ const steps: Partial<Record<string, readonly [number, number]>> = {
 
 const clamp = (n: number) => Math.min(2, Math.max(0, n));
 
+/** Focus the Cell an arrow key points to, stopping at the Board's edges. */
+function onKeyDown(e: KeyboardEvent<HTMLElement>, i: number) {
+  const step = steps[e.key];
+  if (!step) return;
+  e.preventDefault();
+  const next = clamp(Math.floor(i / 3) + step[0]) * 3 + clamp((i % 3) + step[1]);
+  e.currentTarget
+    .closest("[role=grid]")
+    ?.querySelectorAll<HTMLElement>("[role=gridcell]")
+    [next].focus();
+}
+
 const rows = [0, 1, 2];
 
-export function Board({ ref, board, winningLine, disabled, onMove }: Props) {
-  // Roving tabindex: only the last focused Cell is in the Tab order.
+export function Board({ board, firstCellRef, winningLine, disabled, onMove }: Props) {
+  // Roving tabindex: only the last focused Cell is in the Tab order, so focusing
+  // any Cell (including through firstCellRef) moves the Board's Tab stop there.
   const [active, setActive] = useState(0);
-  const cells = useRef<(HTMLButtonElement | null)[]>([]);
-
-  useImperativeHandle(ref, () => ({ focusFirstCell: () => cells.current[0]?.focus() }), []);
-
-  function onKeyDown(e: KeyboardEvent, i: number) {
-    const step = steps[e.key];
-    if (!step) return;
-    e.preventDefault();
-    const row = clamp(Math.floor(i / 3) + step[0]);
-    const col = clamp((i % 3) + step[1]);
-    cells.current[row * 3 + col]?.focus();
-  }
 
   return (
     <div
@@ -58,9 +55,7 @@ export function Board({ ref, board, winningLine, disabled, onMove }: Props) {
             return (
               <button
                 key={i}
-                ref={(el) => {
-                  cells.current[i] = el;
-                }}
+                ref={i === 0 ? firstCellRef : undefined}
                 type="button"
                 role="gridcell"
                 tabIndex={i === active ? 0 : -1}
