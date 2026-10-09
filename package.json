@@ -8,7 +8,9 @@
     "build": "tsc -b && vp build",
     "lint": "vp lint",
     "preview": "vp preview",
-    "prepare": "vp config"
+    "prepare": "vp config",
+    "deploy": "vp run build && cf deploy --prebuilt --mode production",
+    "deploy:dry-run": "vp run build && cf deploy --prebuilt --mode production --dry-run"
   },
   "dependencies": {
     "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
@@ -17,11 +19,13 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "2.0.0-beta.sha-805ec1ff3",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "cf": "1.0.0-beta.13",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
     "vite": "catalog:",
