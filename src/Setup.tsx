@@ -1,4 +1,5 @@
 import type { Ref } from "react";
+import { primaryButton } from "./buttons.ts";
 import type { Mark, Names } from "./game.ts";
 
 type Props = {
@@ -23,10 +24,7 @@ export function Setup({ drafts, onStart, xNameRef }: Props) {
     >
       <NameField mark="X" defaultValue={drafts.X} inputRef={xNameRef} />
       <NameField mark="O" defaultValue={drafts.O} />
-      <button
-        type="submit"
-        className="min-h-11 self-center border-2 border-ink px-10 py-1 font-display text-2xl hover:bg-ink hover:text-paper"
-      >
+      <button type="submit" className={`${primaryButton} self-center`}>
         Start
       </button>
     </form>
