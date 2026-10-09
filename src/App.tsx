@@ -7,11 +7,25 @@ import { Setup } from "./Setup.tsx";
 
 type GameInProgressOrOver = Exclude<GameState, { phase: "setup" }>;
 
+// The Line in words, keyed by its Cell indices.
+const lineNames: Record<string, string> = {
+  "0,1,2": "the top row",
+  "3,4,5": "the middle row",
+  "6,7,8": "the bottom row",
+  "0,3,6": "the left column",
+  "1,4,7": "the middle column",
+  "2,5,8": "the right column",
+  "0,4,8": "the diagonal from top left",
+  "2,4,6": "the diagonal from top right",
+};
+
 function status(state: GameInProgressOrOver) {
   const { players } = state;
   if (state.phase === "playing") return `${players[state.turn]} (${state.turn}) to move`;
   const { outcome } = state;
-  return outcome.kind === "win" ? `${players[outcome.mark]} (${outcome.mark}) wins` : "Draw";
+  return outcome.kind === "win"
+    ? `${players[outcome.mark]} (${outcome.mark}) wins with ${lineNames[outcome.line.join()]}`
+    : "Draw";
 }
 
 /** Ref callback: focus the element once, when it mounts. */
@@ -50,7 +64,10 @@ function App() {
 
   return (
     <Main>
-      <p className="text-xl">{status(state)}</p>
+      {/* The status line doubles as the polite live region for Turns and Outcomes. */}
+      <p role="status" className="text-xl">
+        {status(state)}
+      </p>
       <Board
         board={state.board}
         firstCellRef={firstCell}
