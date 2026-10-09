@@ -1,7 +1,7 @@
 import { type ReactNode, type RefObject, useReducer, useRef } from "react";
 import { flushSync } from "react-dom";
 import { Board } from "./Board.tsx";
-import { primaryButton, secondaryButton } from "./buttons.ts";
+import { button, primaryButton, secondaryButton } from "./buttons.ts";
 import { type GameEvent, type GameState, gameReducer, initialState, lineName } from "./game.ts";
 import { Setup } from "./Setup.tsx";
 
@@ -68,20 +68,27 @@ function App() {
         onMove={(index) => dispatch({ type: "move", index })}
       />
       <div className="flex min-h-11 flex-wrap justify-center gap-3 sm:gap-4">
-        {state.phase === "finished" ? (
-          <button
-            ref={focusOnMount}
-            type="button"
-            className={primaryButton}
-            onClick={() => playAgain("rematch")}
-          >
-            Rematch
-          </button>
-        ) : (
-          <button type="button" className={secondaryButton} onClick={() => playAgain("restart")}>
-            Restart
-          </button>
-        )}
+        {/* Restart and Rematch share one slot, sized by an unseen copy of the other label,
+            so an Outcome never moves or resizes a control. */}
+        <div className="grid *:col-start-1 *:row-start-1">
+          {state.phase === "finished" ? (
+            <button
+              ref={focusOnMount}
+              type="button"
+              className={primaryButton}
+              onClick={() => playAgain("rematch")}
+            >
+              Rematch
+            </button>
+          ) : (
+            <button type="button" className={secondaryButton} onClick={() => playAgain("restart")}>
+              Restart
+            </button>
+          )}
+          <span className={`${button} invisible`}>
+            {state.phase === "finished" ? "Restart" : "Rematch"}
+          </span>
+        </div>
         <button
           type="button"
           className={secondaryButton}
