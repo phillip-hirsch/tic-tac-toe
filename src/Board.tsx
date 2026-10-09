@@ -1,7 +1,10 @@
+import type { Ref } from "react";
 import type { Cell, Line } from "./game.ts";
 
 type Props = {
   board: readonly Cell[];
+  /** The top-left Cell, for moving focus there when a fresh Game starts. */
+  firstCellRef?: Ref<HTMLButtonElement>;
   winningLine?: Line;
   disabled: boolean;
   onMove: (cell: number) => void;
@@ -10,12 +13,13 @@ type Props = {
 /** Centre of the Cell at an index, in a 3×3 coordinate space. */
 const centre = (i: number) => ({ x: (i % 3) + 0.5, y: Math.floor(i / 3) + 0.5 });
 
-export function Board({ board, winningLine, disabled, onMove }: Props) {
+export function Board({ board, firstCellRef, winningLine, disabled, onMove }: Props) {
   return (
     <div className="relative grid aspect-square w-full max-w-96 grid-cols-3">
       {board.map((cell, i) => (
         <button
           key={i}
+          ref={i === 0 ? firstCellRef : undefined}
           type="button"
           aria-label={`Row ${Math.floor(i / 3) + 1}, column ${(i % 3) + 1}, ${cell ?? "empty"}`}
           aria-disabled={disabled || cell !== null}
