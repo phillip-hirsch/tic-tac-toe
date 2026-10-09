@@ -1,7 +1,37 @@
+import { useReducer } from "react";
+import { Board } from "./Board.tsx";
+import { type GameState, gameReducer, initialState } from "./game.ts";
+
+type GameInProgressOrOver = Exclude<GameState, { phase: "setup" }>;
+
+// Until the Setup screen lands, every visit opens straight into a Game.
+const startWithDefaultNames = (state: GameState) =>
+  gameReducer(state, { type: "start", names: { X: "Player X", O: "Player O" } });
+
+function status(state: GameInProgressOrOver) {
+  const { players } = state;
+  if (state.phase === "playing") return `${players[state.turn]} (${state.turn}) to move`;
+  const { outcome } = state;
+  return outcome.kind === "win" ? `${players[outcome.mark]} (${outcome.mark}) wins` : "Draw";
+}
+
 function App() {
+  const [state, dispatch] = useReducer(gameReducer, initialState, startWithDefaultNames);
+  if (state.phase === "setup") return null;
+
+  const winningLine =
+    state.phase === "finished" && state.outcome.kind === "win" ? state.outcome.line : undefined;
+
   return (
-    <main className="mx-auto grid min-h-dvh max-w-3xl place-items-center px-6 py-12">
-      <h1 className="font-display text-6xl leading-none sm:text-8xl">Tic-tac-toe</h1>
+    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col items-center justify-center gap-10 px-6 py-12">
+      <h1 className="font-display text-5xl leading-none sm:text-6xl">Tic-tac-toe</h1>
+      <p className="text-xl">{status(state)}</p>
+      <Board
+        board={state.board}
+        winningLine={winningLine}
+        disabled={state.phase === "finished"}
+        onMove={(cell) => dispatch({ type: "move", cell })}
+      />
     </main>
   );
 }
