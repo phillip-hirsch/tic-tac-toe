@@ -1,6 +1,6 @@
 import { type KeyboardEvent, type Ref, useState } from "react";
-import type { Cell, Line, Mark as MarkType } from "./game.ts";
-import { GhostMark, GridLines, Mark, Strike } from "./Strokes.tsx";
+import { type Cell, type Line, type Mark, rowAndColumn } from "./game.ts";
+import { GhostMark, GridLines, InkMark, Strike } from "./Strokes.tsx";
 
 type Props = {
   board: readonly Cell[];
@@ -8,9 +8,8 @@ type Props = {
   firstCellRef?: Ref<HTMLButtonElement>;
   winningLine?: Line;
   /** The Mark a Move would place, previewed on empty Cells. Omitted once the Game is over. */
-  turn?: MarkType;
-  disabled: boolean;
-  onMove: (cell: number) => void;
+  turn?: Mark;
+  onMove: (index: number) => void;
 };
 
 /**
@@ -32,11 +31,12 @@ const steps: Partial<Record<string, readonly [number, number]>> = {
 const clamp = (n: number) => Math.min(2, Math.max(0, n));
 
 /** Focus the Cell an arrow key points to, stopping at the Board's edges. */
-function onKeyDown(e: KeyboardEvent<HTMLElement>, i: number) {
+function onKeyDown(e: KeyboardEvent<HTMLElement>, index: number) {
   const step = steps[e.key];
   if (!step) return;
   e.preventDefault();
-  const next = clamp(Math.floor(i / 3) + step[0]) * 3 + clamp((i % 3) + step[1]);
+  const [row, column] = rowAndColumn(index);
+  const next = clamp(row + step[0]) * 3 + clamp(column + step[1]);
   e.currentTarget
     .closest("[role=grid]")
     ?.querySelectorAll<HTMLElement>("[role=gridcell]")
@@ -45,7 +45,8 @@ function onKeyDown(e: KeyboardEvent<HTMLElement>, i: number) {
 
 const rows = [0, 1, 2];
 
-export function Board({ board, firstCellRef, winningLine, turn, disabled, onMove }: Props) {
+export function Board({ board, firstCellRef, winningLine, turn, onMove }: Props) {
+  const disabled = turn === undefined;
   // Roving tabindex: only the last focused Cell is in the Tab order, so focusing
   // any Cell (including through firstCellRef) moves the Board's Tab stop there.
   const [active, setActive] = useState(0);
@@ -60,25 +61,25 @@ export function Board({ board, firstCellRef, winningLine, turn, disabled, onMove
       {rows.map((r) => (
         <div key={r} role="row" className="contents">
           {board.slice(r * 3, r * 3 + 3).map((cell, c) => {
-            const i = r * 3 + c;
+            const index = r * 3 + c;
             return (
               <button
-                key={i}
-                ref={i === 0 ? firstCellRef : undefined}
+                key={index}
+                ref={index === 0 ? firstCellRef : undefined}
                 type="button"
                 role="gridcell"
-                tabIndex={i === active ? 0 : -1}
+                tabIndex={index === active ? 0 : -1}
                 aria-label={`Row ${r + 1}, column ${c + 1}, ${cell ?? "empty"}`}
                 aria-disabled={disabled || cell !== null}
-                onFocus={() => setActive(i)}
-                onKeyDown={(e) => onKeyDown(e, i)}
-                onClick={() => onMove(i)}
+                onFocus={() => setActive(index)}
+                onKeyDown={(e) => onKeyDown(e, index)}
+                onClick={() => onMove(index)}
                 className={`group relative ${disabled || cell ? "cursor-default" : "cursor-pointer"}`}
               >
                 {cell ? (
-                  <Mark mark={cell} cell={i} />
+                  <InkMark mark={cell} index={index} />
                 ) : (
-                  turn && !disabled && <GhostMark mark={turn} cell={i} />
+                  turn && <GhostMark mark={turn} index={index} />
                 )}
               </button>
             );

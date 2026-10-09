@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
-import { type GameEvent, gameReducer, initialState } from "./game.ts";
+import { type GameEvent, gameReducer, initialState, type Line, lineName } from "./game.ts";
 
 const start: GameEvent = { type: "start", names: { X: "Ada", O: "Grace" } };
 
 const newPlayers: GameEvent = { type: "newPlayers" };
 
-const move = (cell: number): GameEvent => ({ type: "move", cell });
+const move = (index: number): GameEvent => ({ type: "move", index });
 
 const rematch: GameEvent = { type: "rematch" };
 
@@ -19,7 +19,7 @@ const freshGame = {
 };
 
 // Each Line, with three other Cells that never complete a Line themselves.
-const lines = [
+const lines: { name: string; line: Line; others: number[] }[] = [
   { name: "top row", line: [0, 1, 2], others: [3, 4, 8] },
   { name: "middle row", line: [3, 4, 5], others: [0, 1, 6] },
   { name: "bottom row", line: [6, 7, 8], others: [0, 1, 5] },
@@ -63,12 +63,16 @@ describe("Game", () => {
     expect(gameReducer(state, move(4))).toBe(state);
   });
 
-  it.each([-1, 9, 1.5])("ignores a Move on Cell index %s, which is off the Board", (cell) => {
+  it.each([-1, 9, 1.5])("ignores a Move on Cell index %s, which is off the Board", (index) => {
     const state = play(start, move(4));
-    expect(gameReducer(state, move(cell))).toBe(state);
+    expect(gameReducer(state, move(index))).toBe(state);
   });
 
-  describe.each(lines)("the $name", ({ line, others }) => {
+  describe.each(lines)("the $name", ({ name, line, others }) => {
+    it("is named in words", () => {
+      expect(lineName(line)).toBe(`the ${name}`);
+    });
+
     it("is a Win for X when X fills it", () => {
       const [a, b, c] = line;
       const [p, q] = others;

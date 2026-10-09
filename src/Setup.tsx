@@ -1,6 +1,6 @@
 import type { Ref } from "react";
 import { primaryButton } from "./buttons.ts";
-import type { Mark, Names } from "./game.ts";
+import { defaultName, type Mark, maxNameLength, type Names } from "./game.ts";
 
 type Props = {
   drafts: Names;
@@ -52,8 +52,8 @@ function NameField({
         id={id}
         name={mark}
         defaultValue={defaultValue}
-        placeholder={`Player ${mark}`}
-        maxLength={20}
+        placeholder={defaultName(mark)}
+        maxLength={maxNameLength}
         autoComplete="off"
         className="min-h-11 w-full min-w-0 border-b-2 border-grid bg-transparent text-xl placeholder:text-ink/75"
       />

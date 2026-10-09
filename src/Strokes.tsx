@@ -1,12 +1,12 @@
 import type { CSSProperties } from "react";
-import type { Line, Mark as MarkType } from "./game.ts";
+import { type Line, type Mark, rowAndColumn } from "./game.ts";
 
 /**
  * Pen strokes for a Cell, in a 100×100 space. X is two strokes, top-left to bottom-right, then
  * top-right to bottom-left. O is one counter-clockwise loop that overshoots where it started.
  * Each entry is [path, draw duration, delay] in seconds.
  */
-const strokes: Record<MarkType, readonly (readonly [string, number, number])[]> = {
+const strokes: Record<Mark, readonly (readonly [string, number, number])[]> = {
   X: [
     ["M23 21C39 37 59 61 79 80", 0.18, 0],
     ["M77 19C62 36 41 58 22 80", 0.18, 0.2],
@@ -15,16 +15,16 @@ const strokes: Record<MarkType, readonly (readonly [string, number, number])[]> 
 };
 
 /** A small, repeatable tilt per Cell so the Marks look placed by hand, not stamped. */
-const tilt = (cell: number) => `${((cell * 5) % 7) - 3}deg`;
+const tilt = (index: number) => `${((index * 5) % 7) - 3}deg`;
 
 const svg = "pointer-events-none absolute inset-0 size-full";
 
-type MarkProps = { mark: MarkType; cell: number };
+type MarkProps = { mark: Mark; index: number };
 
 /** A Mark drawn in ink, animated as a pen stroke when it first appears. */
-export function Mark({ mark, cell }: MarkProps) {
+export function InkMark({ mark, index }: MarkProps) {
   return (
-    <svg viewBox="0 0 100 100" aria-hidden className={svg} style={{ rotate: tilt(cell) }}>
+    <svg viewBox="0 0 100 100" aria-hidden className={svg} style={{ rotate: tilt(index) }}>
       {strokes[mark].map(([d, duration, delay]) => (
         <path
           key={d}
@@ -40,13 +40,13 @@ export function Mark({ mark, cell }: MarkProps) {
 }
 
 /** A dotted tracing guide of the Mark a Move would place, shown on hover and focus. */
-export function GhostMark({ mark, cell }: MarkProps) {
+export function GhostMark({ mark, index }: MarkProps) {
   return (
     <svg
       viewBox="0 0 100 100"
       aria-hidden
       className={`${svg} opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100`}
-      style={{ rotate: tilt(cell) }}
+      style={{ rotate: tilt(index) }}
     >
       {strokes[mark].map(([d]) => (
         <path
@@ -74,7 +74,10 @@ export function GridLines() {
 }
 
 /** Centre of the Cell at an index, in the Board's 300×300 space. */
-const centre = (i: number) => ({ x: (i % 3) * 100 + 50, y: Math.floor(i / 3) * 100 + 50 });
+function centre(index: number) {
+  const [row, column] = rowAndColumn(index);
+  return { x: column * 100 + 50, y: row * 100 + 50 };
+}
 
 /**
  * A slightly wavering pen line through the winning Line. It runs past the outer Cells' centres
