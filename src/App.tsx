@@ -36,17 +36,21 @@ function App() {
     state.phase === "finished" && state.outcome.kind === "win" ? state.outcome.line : undefined;
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col items-center justify-center gap-10 px-6 py-12">
+    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col items-center justify-center gap-5 px-4 py-6 sm:gap-8 sm:px-6 sm:py-10">
       <h1 className="font-display text-5xl leading-none sm:text-6xl">Tic-tac-toe</h1>
-      <p className="text-xl">{status(state)}</p>
+      {/* Two lines are reserved so a long name wrapping never moves the Board. */}
+      <p className="flex min-h-[2lh] items-center text-center text-lg wrap-anywhere sm:text-xl">
+        {status(state)}
+      </p>
       <Board
         board={state.board}
         firstCellRef={firstCell}
         winningLine={winningLine}
+        turn={state.phase === "playing" ? state.turn : undefined}
         disabled={state.phase === "finished"}
         onMove={(cell) => dispatch({ type: "move", cell })}
       />
-      <div className="flex flex-wrap justify-center gap-4">
+      <div className="flex min-h-11 flex-wrap justify-center gap-4">
         {state.phase === "finished" ? (
           <button
             ref={focusOnMount}

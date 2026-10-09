@@ -1,21 +1,30 @@
 import type { Ref } from "react";
-import type { Cell, Line } from "./game.ts";
+import type { Cell, Line, Mark as MarkType } from "./game.ts";
+import { GhostMark, GridLines, Mark, Strike } from "./Strokes.tsx";
 
 type Props = {
   board: readonly Cell[];
   /** The top-left Cell, for moving focus there when a fresh Game starts. */
   firstCellRef?: Ref<HTMLButtonElement>;
   winningLine?: Line;
+  /** The Mark a Move would place, previewed on empty Cells. Omitted once the Game is over. */
+  turn?: MarkType;
   disabled: boolean;
   onMove: (cell: number) => void;
 };
 
-/** Centre of the Cell at an index, in a 3×3 coordinate space. */
-const centre = (i: number) => ({ x: (i % 3) + 0.5, y: Math.floor(i / 3) + 0.5 });
+/**
+ * A fixed square from the viewport: the full width less the page margins, or the height left
+ * after the heading, status line and controls, whichever is smaller. Never below 9rem, so Cells
+ * stay 48px or more, and never above 32rem on large screens.
+ */
+const boardSize =
+  "size-[clamp(9rem,min(100vw_-_2rem,100dvh_-_16rem),32rem)] sm:size-[clamp(9rem,min(100vw_-_3rem,100dvh_-_21rem),32rem)]";
 
-export function Board({ board, firstCellRef, winningLine, disabled, onMove }: Props) {
+export function Board({ board, firstCellRef, winningLine, turn, disabled, onMove }: Props) {
   return (
-    <div className="relative grid aspect-square w-full max-w-96 grid-cols-3">
+    <div className={`relative grid shrink-0 grid-cols-3 grid-rows-3 ${boardSize}`}>
+      <GridLines />
       {board.map((cell, i) => (
         <button
           key={i}
@@ -24,36 +33,16 @@ export function Board({ board, firstCellRef, winningLine, disabled, onMove }: Pr
           aria-label={`Row ${Math.floor(i / 3) + 1}, column ${(i % 3) + 1}, ${cell ?? "empty"}`}
           aria-disabled={disabled || cell !== null}
           onClick={() => onMove(i)}
-          className={`grid place-items-center border-grid font-display text-6xl leading-none sm:text-7xl ${
-            i % 3 < 2 ? "border-r-2" : ""
-          } ${i < 6 ? "border-b-2" : ""} ${disabled || cell ? "cursor-default" : "cursor-pointer"}`}
+          className={`group relative ${disabled || cell ? "cursor-default" : "cursor-pointer"}`}
         >
-          {cell}
+          {cell ? (
+            <Mark mark={cell} cell={i} />
+          ) : (
+            turn && !disabled && <GhostMark mark={turn} cell={i} />
+          )}
         </button>
       ))}
       {winningLine && <Strike line={winningLine} />}
     </div>
-  );
-}
-
-function Strike({ line }: { line: Line }) {
-  const from = centre(line[0]);
-  const to = centre(line[2]);
-  // Run a little past the outer Cells' centres, as a pen stroke would.
-  const dx = (to.x - from.x) * 0.15;
-  const dy = (to.y - from.y) * 0.15;
-  return (
-    <svg viewBox="0 0 3 3" aria-hidden className="pointer-events-none absolute inset-0 size-full">
-      <line
-        x1={from.x - dx}
-        y1={from.y - dy}
-        x2={to.x + dx}
-        y2={to.y + dy}
-        className="stroke-accent"
-        strokeWidth={6}
-        strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
-      />
-    </svg>
   );
 }

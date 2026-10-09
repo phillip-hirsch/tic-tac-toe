@@ -7,6 +7,7 @@
  *   light  ink 13.81 (12.05)  accent 5.86 (5.12)  grid 3.89 (3.39)
  *   dark   ink 11.68 (9.77)   accent 6.19 (5.18)  grid 4.56 (3.81)
  * Grid clears 3:1 only, so it is for strokes and borders, never text.
+ * Marks are drawn in ink, the winning stroke in accent, and the Board's lines in grid.
  */
 @theme {
   --color-*: initial;
@@ -17,6 +18,26 @@
 
   --font-sans: "Atkinson Hyperlegible Next Variable", system-ui, sans-serif;
   --font-display: "IM Fell English", "Iowan Old Style", Georgia, serif;
+}
+
+/*
+ * A path with pathLength="1" that draws itself like a pen stroke. Hidden while it waits out its
+ * delay, so a round cap can't show as a dot. With reduced motion it is simply there, fully drawn.
+ */
+@utility stroke-draw {
+  stroke-dasharray: 1;
+  animation: stroke-draw 0.3s cubic-bezier(0.5, 0, 0.3, 1) backwards;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes stroke-draw {
+  from {
+    stroke-dashoffset: 1;
+    visibility: hidden;
+  }
 }
 
 @layer base {
