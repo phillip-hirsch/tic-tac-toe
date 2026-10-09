@@ -33,6 +33,8 @@ export type GameEvent =
   | { readonly type: "start"; readonly names: Names }
   /** Place the Turn's Mark in the Cell at this index (0 to 8). */
   | { readonly type: "move"; readonly cell: number }
+  /** Return to Setup with the current names as drafts. */
+  | { readonly type: "newPlayers" }
   /** A fresh Game between the same Players, after an Outcome. */
   | { readonly type: "rematch" }
   /** Abandon an unfinished Game for a fresh one between the same Players. */
@@ -53,6 +55,10 @@ const lines: readonly Line[] = [
 
 const emptyBoard: readonly Cell[] = Array(9).fill(null);
 
+/** Trim, cap at 20 characters, and fall back to "Player X" or "Player O" when blank. */
+const playerName = (names: Names, mark: Mark) =>
+  names[mark].trim().slice(0, 20) || `Player ${mark}`;
+
 const freshGame = (players: Names): GameState => ({
   phase: "playing",
   players,
@@ -63,7 +69,8 @@ const freshGame = (players: Names): GameState => ({
 export function gameReducer(state: GameState, event: GameEvent): GameState {
   switch (event.type) {
     case "start":
-      return freshGame(event.names);
+      if (state.phase !== "setup") return state;
+      return freshGame({ X: playerName(event.names, "X"), O: playerName(event.names, "O") });
     case "move": {
       if (state.phase !== "playing" || state.board[event.cell] !== null) return state;
       const { players, turn } = state;
@@ -76,6 +83,8 @@ export function gameReducer(state: GameState, event: GameEvent): GameState {
       }
       return { phase: "playing", players, board, turn: turn === "X" ? "O" : "X" };
     }
+    case "newPlayers":
+      return state.phase === "setup" ? state : { phase: "setup", drafts: state.players };
     case "rematch":
       return state.phase === "finished" ? freshGame(state.players) : state;
     case "restart":
