@@ -33,6 +33,7 @@ const clamp = (n: number) => Math.min(2, Math.max(0, n));
 /** Focus the Cell an arrow key points to, stopping at the Board's edges. */
 function onKeyDown(e: KeyboardEvent<HTMLElement>, index: number) {
   const step = steps[e.key];
+
   if (!step) return;
   e.preventDefault();
   const [row, column] = rowAndColumn(index);
@@ -62,6 +63,7 @@ export function Board({ board, firstCellRef, winningLine, turn, onMove }: Props)
         <div key={r} role="row" className="contents">
           {board.slice(r * 3, r * 3 + 3).map((cell, c) => {
             const index = r * 3 + c;
+
             return (
               <button
                 key={index}

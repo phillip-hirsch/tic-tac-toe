@@ -84,19 +84,24 @@ export function gameReducer(state: GameState, event: GameEvent): GameState {
   switch (event.type) {
     case "start":
       if (state.phase !== "setup") return state;
+
       return freshGame({ X: playerName(event.names, "X"), O: playerName(event.names, "O") });
     case "move": {
       if (state.phase !== "playing" || state.board[event.index] !== null) return state;
       const { players, turn } = state;
       const board = state.board.with(event.index, turn);
       const line = lines.find((l) => l.line.every((i) => board[i] === turn))?.line;
+
       if (line)
         return { phase: "finished", players, board, outcome: { kind: "win", mark: turn, line } };
+
       if (board.every((cell) => cell !== null)) {
         return { phase: "finished", players, board, outcome: { kind: "draw" } };
       }
+
       return { phase: "playing", players, board, turn: turn === "X" ? "O" : "X" };
     }
+
     case "newPlayers":
       return state.phase === "setup" ? state : { phase: "setup", drafts: state.players };
     case "rematch":

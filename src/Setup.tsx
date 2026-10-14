@@ -15,10 +15,13 @@ export function Setup({ drafts, onStart, xNameRef }: Props) {
       onSubmit={(e) => {
         e.preventDefault();
         const data = new FormData(e.currentTarget);
+
         const name = (mark: Mark) => {
           const value = data.get(mark);
+
           return typeof value === "string" ? value : "";
         };
+
         onStart({ X: name("X"), O: name("O") });
       }}
     >
@@ -41,6 +44,7 @@ function NameField({
   inputRef?: Ref<HTMLInputElement>;
 }) {
   const id = `name-${mark}`;
+
   return (
     <div className="grid grid-cols-[auto_1fr] items-end gap-x-4">
       <span aria-hidden className="row-span-2 font-display text-6xl leading-none">

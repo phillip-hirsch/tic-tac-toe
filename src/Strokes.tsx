@@ -76,6 +76,7 @@ export function GridLines() {
 /** Centre of the Cell at an index, in the Board's 300×300 space. */
 function centre(index: number) {
   const [row, column] = rowAndColumn(index);
+
   return { x: column * 100 + 50, y: row * 100 + 50 };
 }
 
@@ -88,11 +89,14 @@ export function Strike({ line }: { line: Line }) {
   const b = centre(line[2]);
   const length = Math.hypot(b.x - a.x, b.y - a.y);
   const [ux, uy] = [(b.x - a.x) / length, (b.y - a.y) / length];
+
   // A point `along` units from the first centre, nudged `off` units to one side.
   const at = (along: number, off: number) =>
     `${(a.x + ux * along - uy * off).toFixed(1)} ${(a.y + uy * along + ux * off).toFixed(1)}`;
+
   const d = `M${at(-32, 3)}C${at(length * 0.3, -5)} ${at(length * 0.7, 6)} ${at(length + 32, -2)}`;
   const timing: CSSProperties = { animationDuration: "0.45s", animationDelay: "0.4s" };
+
   return (
     <svg viewBox="0 0 300 300" aria-hidden className={svg}>
       <path
