@@ -9,8 +9,10 @@ import { Setup } from "./Setup.tsx";
 function announcement(state: GameState) {
   if (state.phase === "setup") return "";
   const { players } = state;
+
   if (state.phase === "playing") return `${players[state.turn]} (${state.turn}) to move`;
   const { outcome } = state;
+
   return outcome.kind === "win"
     ? `${players[outcome.mark]} (${outcome.mark}) wins with ${lineName(outcome.line)}`
     : "Draw";
