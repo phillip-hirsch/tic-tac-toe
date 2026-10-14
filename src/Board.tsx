@@ -21,18 +21,18 @@ const boardSize =
   "size-[clamp(9rem,min(100vw_-_2rem,100dvh_-_18rem),32rem)] sm:size-[clamp(9rem,min(100vw_-_3rem,100dvh_-_21rem),32rem)]";
 
 /** Row and column step for each arrow key. */
-const steps: Partial<Record<string, readonly [number, number]>> = {
-  ArrowUp: [-1, 0],
-  ArrowDown: [1, 0],
-  ArrowLeft: [0, -1],
-  ArrowRight: [0, 1],
-};
+const steps = new Map<string, readonly [number, number]>([
+  ["ArrowUp", [-1, 0]],
+  ["ArrowDown", [1, 0]],
+  ["ArrowLeft", [0, -1]],
+  ["ArrowRight", [0, 1]],
+]);
 
 const clamp = (n: number) => Math.min(2, Math.max(0, n));
 
 /** Focus the Cell an arrow key points to, stopping at the Board's edges. */
 function onKeyDown(e: KeyboardEvent<HTMLElement>, index: number) {
-  const step = steps[e.key];
+  const step = steps.get(e.key);
 
   if (!step) return;
   e.preventDefault();
